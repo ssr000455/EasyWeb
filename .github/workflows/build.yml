@@ -7,6 +7,9 @@ on:
     branches: [ "master", "main" ]
   workflow_dispatch:
 
+env:
+  SDL2_VERSION: 2.28.5
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,7 +37,7 @@ jobs:
             armv7-linux-androideabi
             x86_64-linux-android
 
-      - name: Cache Rust dependencies
+      - name: Cache Cargo
         uses: actions/cache@v4
         with:
           path: |
@@ -43,30 +46,89 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
 
+      - name: Cache SDL2 builds
+        id: cache-sdl2
+        uses: actions/cache@v4
+        with:
+          path: ~/sdl2-android
+          key: ${{ runner.os }}-sdl2-${{ env.SDL2_VERSION }}
+
       - name: Install cargo-ndk
         run: cargo install cargo-ndk
 
-      - name: Build Rust libraries
+      - name: Build SDL2 for Android
+        if: steps.cache-sdl2.outputs.cache-hit != 'true'
         run: |
-          cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 \
-            -o android/app/src/main/jniLibs build --release
+          NDK_VERSION=$(ls $ANDROID_HOME/ndk/ | head -1)
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION
+          sudo apt-get update -qq && sudo apt-get install -y -qq cmake ninja-build
+
+          build_sdl2() {
+            local ARCH=$1
+            local ABI=$2
+            local PREFIX=~/sdl2-android/$ARCH
+            wget -q "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-${SDL2_VERSION}.tar.gz"
+            tar xzf "SDL2-${SDL2_VERSION}.tar.gz"
+            cd "SDL2-${SDL2_VERSION}"
+            cmake -B build-$ARCH \
+              -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+              -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
+              -DCMAKE_INSTALL_PREFIX=$PREFIX \
+              -DSDL_TEST=OFF -DSDL_STATIC=ON -G Ninja
+            cmake --build build-$ARCH --target install
+            cd .. && rm -rf "SDL2-${SDL2_VERSION}"*
+          }
+
+          build_sdl2 "aarch64" "arm64-v8a"
+          build_sdl2 "armv7" "armeabi-v7a"
+          build_sdl2 "x86_64" "x86_64"
+
+      - name: Build Rust libraries (arm64-v8a)
+        run: |
+          export SDL2_DIR=~/sdl2-android/aarch64
+          cargo ndk -t arm64-v8a --platform 21 build --release --lib
+
+      - name: Build Rust libraries (armeabi-v7a)
+        run: |
+          export SDL2_DIR=~/sdl2-android/armv7
+          cargo ndk -t armeabi-v7a --platform 21 build --release --lib
+
+      - name: Build Rust libraries (x86_64)
+        run: |
+          export SDL2_DIR=~/sdl2-android/x86_64
+          cargo ndk -t x86_64 --platform 21 build --release --lib
+
+      - name: Copy libraries to jniLibs
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/armeabi-v7a
+          mkdir -p android/app/src/main/jniLibs/x86_64
+
+          cp target/aarch64-linux-android/release/libeasyweb.so \
+            android/app/src/main/jniLibs/arm64-v8a/
+          cp target/armv7-linux-androideabi/release/libeasyweb.so \
+            android/app/src/main/jniLibs/armeabi-v7a/
+          cp target/x86_64-linux-android/release/libeasyweb.so \
+            android/app/src/main/jniLibs/x86_64/
+
+          cp ~/sdl2-android/aarch64/lib/libSDL2.so \
+            android/app/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
+          cp ~/sdl2-android/armv7/lib/libSDL2.so \
+            android/app/src/main/jniLibs/armeabi-v7a/ 2>/dev/null || true
+          cp ~/sdl2-android/x86_64/lib/libSDL2.so \
+            android/app/src/main/jniLibs/x86_64/ 2>/dev/null || true
 
       - name: Create local.properties
-        run: |
-          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Generate Gradle Wrapper
-        run: |
-          cd android
-          gradle wrapper --gradle-version=8.5
+        run: cd android && gradle wrapper --gradle-version=8.5
 
       - name: Build APK with Gradle
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+        run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

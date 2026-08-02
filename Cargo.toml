@@ -12,8 +12,15 @@ crate-type = ["cdylib", "rlib"]
 name = "easyweb"
 path = "src/main.rs"
 
-[dependencies]
-sdl2 = { version = "0.37", features = ["ttf", "image", "static-link"] }
+# Non-Android: use static-link for SDL2
+[target.'cfg(not(target_os = "android"))'.dependencies.sdl2]
+version = "0.37"
+features = ["ttf", "image", "static-link"]
+
+# Android: no static-link (SDL2main doesn't exist for Android)
+[target.'cfg(target_os = "android")'.dependencies.sdl2]
+version = "0.37"
+features = ["ttf", "image", "use-pkgconfig"]
 
 [package.metadata.android]
 package = "com.easyweb.app"
