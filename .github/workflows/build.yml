@@ -87,6 +87,7 @@ jobs:
                 -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH \
                 -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH \
                 -DSDL2TTF_VENDORED=ON -DSDL2TTF_HARFBUZZ=OFF \
+                -DSDL2TTF_SAMPLES=OFF -DSDL2TTF_INSTALL=ON \
                 -DBUILD_SHARED_LIBS=OFF -G Ninja
               cmake --build build-$ARCH --target install
               cd .. && rm -rf "SDL2_ttf-${TAG}"*
