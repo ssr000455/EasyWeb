@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background-color: #f5f5f5; }
+    h1 { color: #333; border-bottom: 2px solid #0066cc; padding-bottom: 10px; }
+    .card { background-color: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
+    .highlight { color: #0066cc; font-weight: bold; }
+    p { line-height: 1.6; color: #444; }
+    .flex-demo { display: flex; gap: 10px; margin: 20px 0; }
+    .flex-item { background-color: #0066cc; color: white; padding: 15px; border-radius: 4px; text-align: center; flex-grow: 1; }
+    .flex-item:nth-child(2) { background-color: #0099ff; }
+    .flex-item:nth-child(3) { background-color: #00cc66; }
+  </style>
+</head>
+<body>
+  <h1>EasyWeb 渲染引擎</h1>
+  <p>这是一个轻量级 <span class="highlight">Web 渲染引擎</span> 的测试页面。</p>
+
+  <div class="card">
+    <h2>盒模型测试</h2>
+    <p>这个卡片展示了 padding、border、margin 和 background-color 的渲染效果。</p>
+    <p>第二行文字用于测试多行文本渲染。</p>
+  </div>
+
+  <div class="card">
+    <h2>Flexbox 布局测试</h2>
+    <div class="flex-demo">
+      <div class="flex-item">项目 A</div>
+      <div class="flex-item">项目 B</div>
+      <div class="flex-item">项目 C</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>文本样式测试</h2>
+    <p><b>粗体文字</b> 和 <i>斜体文字</i> 的渲染效果。</p>
+    <p>各种字号：<span style="font-size: 24px;">大号</span> <span style="font-size: 12px;">小号</span></p>
+  </div>
+</body>
+</html>

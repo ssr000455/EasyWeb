@@ -1,0 +1,22 @@
+[package]
+name = "easyweb"
+version = "0.1.0"
+edition = "2021"
+description = "A lightweight independent web rendering engine"
+
+[lib]
+name = "easyweb"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "easyweb"
+path = "src/main.rs"
+
+[dependencies]
+sdl2 = { version = "0.37", features = ["ttf", "image", "static-link"] }
+
+[package.metadata.android]
+package = "com.easyweb.app"
+name = "EasyWeb"
+version = "0.1.0"
+orientation = "sensor"
