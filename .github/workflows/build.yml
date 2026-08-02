@@ -68,6 +68,11 @@ jobs:
                 -DCMAKE_INSTALL_PREFIX=$PREFIX \
                 -DSDL_TEST=OFF -DSDL_STATIC=ON -G Ninja
               cmake --build build-$ARCH --target install
+              # SDL2 does not build SDL2main on Android, but sdl2-sys
+              # with static-link unconditionally links it. Create a dummy
+              # empty archive to satisfy the linker (SDL2main is unused
+              # on Android; the entry point is ANativeActivity_onCreate).
+              echo '!<arch>' > $PREFIX/lib/libSDL2main.a
               cd .. && rm -rf "SDL2-${SDL2_VERSION}"*
             }
 
