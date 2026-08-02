@@ -1,7 +1,7 @@
 fn main() {
-    // For Android cross-compilation, the SDL2_DIR must be set by the workflow
-    // after building SDL2 from source for the Android target.
-    // The sdl2-sys crate will pick up SDL2_DIR automatically.
+    // NOTE: sdl2-sys does NOT read SDL2_DIR or SDL2_INCLUDE_DIR env vars.
+    // We must emit cargo:rustc-link-search ourselves so the linker can find
+    // the pre-built SDL2 libraries (installed by the CI workflow).
     if let Ok(dir) = std::env::var("SDL2_DIR") {
         println!("cargo:rustc-link-search=native={}/lib", dir);
     }

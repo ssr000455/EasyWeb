@@ -17,10 +17,12 @@ path = "src/main.rs"
 version = "0.37"
 features = ["ttf", "image", "static-link"]
 
-# Android: no static-link (SDL2main doesn't exist for Android)
+# Android: use static-link so sdl2-sys correctly emits sub-library linker flags
+# (SDL2main is never linked on Android regardless of static-link setting)
+# SDL2_DIR is set by workflow to find pre-built SDL2 + SDL2_ttf
 [target.'cfg(target_os = "android")'.dependencies.sdl2]
 version = "0.37"
-features = ["ttf", "image", "use-pkgconfig"]
+features = ["ttf", "static-link"]
 
 [package.metadata.android]
 package = "com.easyweb.app"
