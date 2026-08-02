@@ -74,7 +74,7 @@ jobs:
             build_sdl2_ttf() {
               local ARCH=$1; local ABI=$2; local PREFIX=~/sdl2-android/$ARCH
               local TAG=$(git ls-remote --tags --sort=-v:refname https://github.com/libsdl-org/SDL_ttf.git \
-                | grep -oP 'release-\K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+                | grep -oP 'release-\K2\.[0-9]+\.[0-9]+' | head -1)
               echo "SDL2_ttf: release-$TAG"
               wget -q "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${TAG}/SDL2_ttf-${TAG}.tar.gz"
               tar xzf "SDL2_ttf-${TAG}.tar.gz"
