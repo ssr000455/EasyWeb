@@ -7,8 +7,13 @@ on:
     branches: [ "master", "main" ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-debug:
+    name: Build Debug APK
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +31,15 @@ jobs:
         with:
           cmdline-tools-version: 11076708
 
+      - name: Cache NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk/26.1.10909125
+          key: ndk-26.1.10909125-${{ runner.os }}
+
       - name: Install NDK, CMake, Platform and Build-Tools
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "ndk;26.1.10909125" \
@@ -37,15 +50,85 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
 
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-          cd android && ./gradlew assembleDebug --no-daemon
+          cd android && ./gradlew assembleDebug --no-daemon --stacktrace
+          rm -f local.properties
 
-      - name: Upload APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: easyweb-debug-apk
+          name: EasyWeb-Debug-${{ github.sha }}
           path: android/app/build/outputs/apk/debug/*.apk
           compression-level: 0
+          retention-days: 30
+
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 11076708
+
+      - name: Cache NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk/26.1.10909125
+          key: ndk-26.1.10909125-${{ runner.os }}
+
+      - name: Install NDK, CMake, Platform and Build-Tools
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "ndk;26.1.10909125" \
+            "cmake;3.22.1" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            --sdk_root=$ANDROID_HOME
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Build Release APK
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          cd android && ./gradlew assembleRelease --no-daemon --stacktrace
+          rm -f local.properties
+
+      - name: Sign Release APK
+        if: secrets.ANDROID_KEYSTORE != ''
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyWeb-Release-${{ github.sha }}
+          path: android/app/build/outputs/apk/release/*.apk
+          compression-level: 0
+          retention-days: 90
