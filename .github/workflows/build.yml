@@ -9,7 +9,6 @@ on:
 
 env:
   SDL2_VERSION: 2.30.12
-  SDL2TTF_VERSION: 2.30.3
 
 jobs:
   build:
@@ -38,121 +37,95 @@ jobs:
             armv7-linux-androideabi
             x86_64-linux-android
 
-      - name: Cache Cargo
+      - name: Cache Cargo & SDL2
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+            ~/sdl2-android
+          key: ${{ runner.os }}-build-${{ hashFiles('Cargo.lock') }}-sdl2-${{ env.SDL2_VERSION }}
 
-      - name: Cache SDL2 builds
-        id: cache-sdl2
-        uses: actions/cache@v4
-        with:
-          path: ~/sdl2-android
-          key: ${{ runner.os }}-sdl2-${{ env.SDL2_VERSION }}
-
-      - name: Install cargo-ndk
-        run: cargo install cargo-ndk
-
-      - name: Build SDL2 for Android
-        if: steps.cache-sdl2.outputs.cache-hit != 'true'
+      - name: Build everything
         run: |
           NDK_VERSION=$(ls $ANDROID_HOME/ndk/ | head -1)
           export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION
           sudo apt-get update -qq && sudo apt-get install -y -qq cmake ninja-build
 
-          build_sdl2() {
-            local ARCH=$1
-            local ABI=$2
-            local PREFIX=~/sdl2-android/$ARCH
-            wget -q "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-${SDL2_VERSION}.tar.gz"
-            tar xzf "SDL2-${SDL2_VERSION}.tar.gz"
-            cd "SDL2-${SDL2_VERSION}"
-            cmake -B build-$ARCH \
-              -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
-              -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
-              -DCMAKE_INSTALL_PREFIX=$PREFIX \
-              -DSDL_TEST=OFF -DSDL_STATIC=ON -G Ninja
-            cmake --build build-$ARCH --target install
-            cd .. && rm -rf "SDL2-${SDL2_VERSION}"*
-          }
+          # --- 构建 SDL2（如果缓存未命中）---
+          if [ ! -d ~/sdl2-android/aarch64 ]; then
+            echo "Building SDL2 and SDL2_ttf from source..."
 
-          build_sdl2_ttf() {
-            local ARCH=$1
-            local ABI=$2
-            local PREFIX=~/sdl2-android/$ARCH
-            wget -q "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${SDL2TTF_VERSION}/SDL2_ttf-${SDL2TTF_VERSION}.tar.gz"
-            tar xzf "SDL2_ttf-${SDL2TTF_VERSION}.tar.gz"
-            cd "SDL2_ttf-${SDL2TTF_VERSION}"
-            cmake -B build-$ARCH \
-              -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
-              -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
-              -DCMAKE_INSTALL_PREFIX=$PREFIX \
-              -DCMAKE_PREFIX_PATH=$PREFIX \
-              -DSDL2TTF_VENDORED=ON \
-              -DSDL2TTF_HARFBUZZ=OFF \
-              -DSDL2TTF_STATIC=ON -DSDL2TTF_SHARED=OFF \
-              -G Ninja
-            cmake --build build-$ARCH --target install
-            cd .. && rm -rf "SDL2_ttf-${SDL2TTF_VERSION}"*
-          }
+            build_sdl2() {
+              local ARCH=$1; local ABI=$2; local PREFIX=~/sdl2-android/$ARCH
+              wget -q "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-${SDL2_VERSION}.tar.gz"
+              tar xzf "SDL2-${SDL2_VERSION}.tar.gz"
+              cd "SDL2-${SDL2_VERSION}"
+              cmake -B build-$ARCH \
+                -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+                -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
+                -DCMAKE_INSTALL_PREFIX=$PREFIX \
+                -DSDL_TEST=OFF -DSDL_STATIC=ON -G Ninja
+              cmake --build build-$ARCH --target install
+              cd .. && rm -rf "SDL2-${SDL2_VERSION}"*
+            }
 
-          build_sdl2 "aarch64" "arm64-v8a"
-          build_sdl2_ttf "aarch64" "arm64-v8a"
-          build_sdl2 "armv7" "armeabi-v7a"
-          build_sdl2_ttf "armv7" "armeabi-v7a"
-          build_sdl2 "x86_64" "x86_64"
-          build_sdl2_ttf "x86_64" "x86_64"
+            build_sdl2_ttf() {
+              local ARCH=$1; local ABI=$2; local PREFIX=~/sdl2-android/$ARCH
+              local TAG=$(git ls-remote --tags --sort=-v:refname https://github.com/libsdl-org/SDL_ttf.git \
+                | grep -oP 'release-\K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+              echo "SDL2_ttf: release-$TAG"
+              wget -q "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${TAG}/SDL2_ttf-${TAG}.tar.gz"
+              tar xzf "SDL2_ttf-${TAG}.tar.gz"
+              cd "SDL2_ttf-${TAG}"
+              cmake -B build-$ARCH \
+                -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+                -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
+                -DCMAKE_INSTALL_PREFIX=$PREFIX \
+                -DCMAKE_PREFIX_PATH=$PREFIX \
+                -DSDL2TTF_VENDORED=ON -DSDL2TTF_HARFBUZZ=OFF \
+                -DSDL2TTF_STATIC=ON -DSDL2TTF_SHARED=OFF -G Ninja
+              cmake --build build-$ARCH --target install
+              cd .. && rm -rf "SDL2_ttf-${TAG}"*
+            }
 
-      - name: Build Rust libraries (arm64-v8a)
-        run: |
-          export SDL2_DIR=~/sdl2-android/aarch64
-          cargo ndk -t arm64-v8a --platform 21 build --release --lib
+            build_sdl2 "aarch64" "arm64-v8a"
+            build_sdl2_ttf "aarch64" "arm64-v8a"
+            build_sdl2 "armv7" "armeabi-v7a"
+            build_sdl2_ttf "armv7" "armeabi-v7a"
+            build_sdl2 "x86_64" "x86_64"
+            build_sdl2_ttf "x86_64" "x86_64"
+          else
+            echo "SDL2 cached, skipping build."
+          fi
 
-      - name: Build Rust libraries (armeabi-v7a)
-        run: |
-          export SDL2_DIR=~/sdl2-android/armv7
-          cargo ndk -t armeabi-v7a --platform 21 build --release --lib
+          # --- 安装 cargo-ndk ---
+          cargo install cargo-ndk
 
-      - name: Build Rust libraries (x86_64)
-        run: |
-          export SDL2_DIR=~/sdl2-android/x86_64
-          cargo ndk -t x86_64 --platform 21 build --release --lib
+          # --- 构建 Rust 库 + 复制到 jniLibs ---
+          mkdir -p android/app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86_64}
 
-      - name: Copy libraries to jniLibs
-        run: |
-          mkdir -p android/app/src/main/jniLibs/arm64-v8a
-          mkdir -p android/app/src/main/jniLibs/armeabi-v7a
-          mkdir -p android/app/src/main/jniLibs/x86_64
+          for target in "aarch64,arm64-v8a" "armv7,armeabi-v7a" "x86_64,x86_64"; do
+            ARCH=$(echo $target | cut -d, -f1)
+            ABI=$(echo $target | cut -d, -f2)
+            export SDL2_DIR=~/sdl2-android/$ARCH
+            echo "Building for $ARCH ($ABI)..."
+            cargo ndk -t $ABI --platform 21 build --release --lib
 
-          cp target/aarch64-linux-android/release/libeasyweb.so \
-            android/app/src/main/jniLibs/arm64-v8a/
-          cp target/armv7-linux-androideabi/release/libeasyweb.so \
-            android/app/src/main/jniLibs/armeabi-v7a/
-          cp target/x86_64-linux-android/release/libeasyweb.so \
-            android/app/src/main/jniLibs/x86_64/
-
-          cp ~/sdl2-android/aarch64/lib/libSDL2.so \
-            android/app/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
-          cp ~/sdl2-android/armv7/lib/libSDL2.so \
-            android/app/src/main/jniLibs/armeabi-v7a/ 2>/dev/null || true
-          cp ~/sdl2-android/x86_64/lib/libSDL2.so \
-            android/app/src/main/jniLibs/x86_64/ 2>/dev/null || true
-
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+            cp target/$ARCH-linux-android/release/libeasyweb.so \
+              android/app/src/main/jniLibs/$ABI/
+            cp ~/sdl2-android/$ARCH/lib/libSDL2.so \
+              android/app/src/main/jniLibs/$ABI/ 2>/dev/null || true
+          done
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Generate Gradle Wrapper
-        run: cd android && gradle wrapper --gradle-version=8.5
-
-      - name: Build APK with Gradle
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Build APK
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
