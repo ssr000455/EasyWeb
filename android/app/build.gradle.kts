@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    kotlin("android") version "1.9.22"
 }
 
 android {
@@ -13,6 +14,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        // NDK 编译目标架构
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
@@ -28,15 +30,22 @@ android {
         }
     }
 
-    sourceSets {
-        getByName("main") {
-            jniLibs.srcDirs("src/main/jniLibs")
+    // 使用 CMake 编译原生代码
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
         }
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
 dependencies {
-    implementation("org.libsdl.android:SDL2:2.28.5")
-    implementation("org.libsdl.android:SDL2_ttf:2.20.2")
-    implementation("org.libsdl.android:SDL2_image:2.6.3")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.activity:activity:1.8.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

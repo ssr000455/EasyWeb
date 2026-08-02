@@ -21,7 +21,7 @@ out/
 *~
 .DS_Store
 
-# 依赖缓存（重点）
+# 依赖缓存
 node_modules/
 .cache/
 .npm/
@@ -40,21 +40,14 @@ tmp/
 temp/
 *.tmp
 
-# 渲染引擎特定（看你是什么语言）
-# 如果是C++：
-CMakeCache.txt
-CMakeFiles/
-Makefile
-cmake_install.cmake
+# Android
+local.properties
+*.apk
+*.aab
+*.ap_
+.cxx/
 
-# 如果是Rust：
+# Kotlin/Rust
 target/
 Cargo.lock
-
-# 如果是Python：
-*.egg-info/
-dist/
-build/
-
-# 如果是JavaScript/TS：
 *.tsbuildinfo
