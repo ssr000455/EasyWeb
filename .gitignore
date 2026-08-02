@@ -1,0 +1,60 @@
+# 编译产物
+*.class
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+build/
+dist/
+target/
+bin/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 依赖缓存（重点）
+node_modules/
+.cache/
+.npm/
+.gradle/
+.m2/
+.cargo/
+__pycache__/
+*.pyc
+
+# 日志
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 渲染引擎特定（看你是什么语言）
+# 如果是C++：
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# 如果是Rust：
+target/
+Cargo.lock
+
+# 如果是Python：
+*.egg-info/
+dist/
+build/
+
+# 如果是JavaScript/TS：
+*.tsbuildinfo
