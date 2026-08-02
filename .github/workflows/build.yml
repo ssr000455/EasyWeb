@@ -84,6 +84,8 @@ jobs:
                 -DANDROID_ABI=$ABI -DANDROID_PLATFORM=21 \
                 -DCMAKE_INSTALL_PREFIX=$PREFIX \
                 -DCMAKE_PREFIX_PATH=$PREFIX \
+                -DSDL2_INCLUDE_DIR=$PREFIX/include/SDL2 \
+                -DSDL2_LIBRARY=$PREFIX/lib/libSDL2.a \
                 -DSDL2TTF_VENDORED=ON -DSDL2TTF_HARFBUZZ=OFF \
                 -DSDL2TTF_STATIC=ON -DSDL2TTF_SHARED=OFF -G Ninja
               cmake --build build-$ARCH --target install
