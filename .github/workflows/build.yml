@@ -23,7 +23,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK & Platform
+      - name: Install NDK, Platform & Build-Tools
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "ndk;26.1.10909125" \
@@ -31,10 +31,13 @@ jobs:
             "build-tools;34.0.0" \
             --sdk_root=$ANDROID_HOME
 
-      - name: Generate Gradle Wrapper
+      - name: Download QuickJS
         run: |
-          cd android
-          gradle wrapper --gradle-version 8.2
+          cd android/app/src/main/cpp
+          curl -sL "https://bellard.org/quickjs/quickjs-2024-01-13.tar.gz" -o quickjs.tar.gz
+          tar -xzf quickjs.tar.gz
+          rm -f quickjs.tar.gz
+          ls -la quickjs-2024-01-13/quickjs.h
 
       - name: Build APK
         run: cd android && ./gradlew assembleDebug --no-daemon --no-build-cache
