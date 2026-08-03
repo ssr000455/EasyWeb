@@ -26,6 +26,8 @@ set(QUICKJS_SOURCES
     ${QUICKJS_DIR}/quickjs-libc.c
     ${QUICKJS_DIR}/libunicode.c
     ${QUICKJS_DIR}/libregexp.c
+    ${QUICKJS_DIR}/cutils.c
+    ${QUICKJS_DIR}/dtoa.c
 )
 
 # QuickJS 头文件路径
