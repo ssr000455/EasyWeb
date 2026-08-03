@@ -130,7 +130,7 @@ fun parseColor(s: String): Long? {
 }
 
 // 将RGBA转换为ARGB long
-private fun toArgb(r: Int, g: Int, b: Int, a: Int): Long {
+fun toArgb(r: Int, g: Int, b: Int, a: Int): Long {
     return ((a.toLong() and 0xFF) shl 24) or
            ((r.toLong() and 0xFF) shl 16) or
            ((g.toLong() and 0xFF) shl 8) or

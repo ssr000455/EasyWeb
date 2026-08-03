@@ -187,7 +187,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadFromAssets(path: String): PageData {
         return try {
             val html = assets.open(path).bufferedReader().use { it.readText() }
-            val dom = Html.Parser.parse(html)
+            val dom = Parser.parse(html)
             val title = extractTitle(dom)
             val cssText = StringBuilder()
             val cssUrls = mutableListOf<String>()
@@ -223,8 +223,9 @@ class MainActivity : AppCompatActivity() {
     private fun extractTitle(node: Node): String {
         if (node.kind == NodeKind.Element && node.tagName() == "title") {
             for (child in node.children) {
-                if (child.kind == NodeKind.Text && child.text != null) {
-                    return child.text.trim()
+                if (child.kind == NodeKind.Text) {
+                    val text = child.text
+                    if (text != null) return text.trim()
                 }
             }
         }

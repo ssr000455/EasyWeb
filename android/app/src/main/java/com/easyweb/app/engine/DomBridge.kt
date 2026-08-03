@@ -571,8 +571,8 @@ class DomBridge(
         } ?: ""
     }
 
-    private fun setDocumentTitle(title: String) {
-        val doc = documentNode ?: return
+    private fun setDocumentTitle(title: String): String {
+        val doc = documentNode ?: return ""
         var titleEl = findElementByTag(doc, "title")
         if (titleEl == null) {
             titleEl = Node.createElement("title")
@@ -585,6 +585,7 @@ class DomBridge(
         }
         titleEl.children.clear()
         titleEl.children.add(Node.createText(title))
+        return ""
     }
 
     private fun getDocumentBody(): String {
@@ -601,9 +602,10 @@ class DomBridge(
         return "null"
     }
 
-    private fun createStyleElement(cssText: String) {
+    private fun createStyleElement(cssText: String): String {
         // 将动态创建的 style 内容添加到样式表中
         // 当前暂不处理动态样式更新
+        return ""
     }
 
     // ─── 历史栈方法 ───
@@ -730,9 +732,10 @@ class DomBridge(
         return node.elementData?.id() ?: ""
     }
 
-    private fun elementSetId(id: String, value: String) {
-        val node = getNode(id) ?: return
+    private fun elementSetId(id: String, value: String): String {
+        val node = getNode(id) ?: return ""
         node.elementData?.attrs?.put("id", value)
+        return ""
     }
 
     private fun elementClassName(id: String): String {
@@ -740,9 +743,10 @@ class DomBridge(
         return node.elementData?.getAttr("class") ?: ""
     }
 
-    private fun elementSetClassName(id: String, value: String) {
-        val node = getNode(id) ?: return
+    private fun elementSetClassName(id: String, value: String): String {
+        val node = getNode(id) ?: return ""
         node.elementData?.attrs?.put("class", value)
+        return ""
     }
 
     private fun elementInnerHTML(id: String): String {
@@ -752,8 +756,8 @@ class DomBridge(
         return sb.toString()
     }
 
-    private fun elementSetInnerHTML(id: String, html: String) {
-        val node = getNode(id) ?: return
+    private fun elementSetInnerHTML(id: String, html: String): String {
+        val node = getNode(id) ?: return ""
         node.children.clear()
         if (html.isNotBlank()) {
             // 将 HTML 片段包装在临时 div 中解析
@@ -766,6 +770,7 @@ class DomBridge(
                 }
             }
         }
+        return ""
     }
 
     private fun elementTextContent(id: String): String {
@@ -775,10 +780,11 @@ class DomBridge(
         return sb.toString()
     }
 
-    private fun elementSetTextContent(id: String, text: String) {
-        val node = getNode(id) ?: return
+    private fun elementSetTextContent(id: String, text: String): String {
+        val node = getNode(id) ?: return ""
         node.children.clear()
         node.children.add(Node.createText(text))
+        return ""
     }
 
     private fun elementGetAttribute(id: String, name: String): String {
@@ -786,14 +792,16 @@ class DomBridge(
         return node.elementData?.getAttr(name) ?: "null"
     }
 
-    private fun elementSetAttribute(id: String, name: String, value: String) {
-        val node = getNode(id) ?: return
+    private fun elementSetAttribute(id: String, name: String, value: String): String {
+        val node = getNode(id) ?: return ""
         node.elementData?.attrs?.put(name, value)
+        return ""
     }
 
-    private fun elementRemoveAttribute(id: String, name: String) {
-        val node = getNode(id) ?: return
+    private fun elementRemoveAttribute(id: String, name: String): String {
+        val node = getNode(id) ?: return ""
         node.elementData?.attrs?.remove(name)
+        return ""
     }
 
     private fun elementParentNode(id: String): String {

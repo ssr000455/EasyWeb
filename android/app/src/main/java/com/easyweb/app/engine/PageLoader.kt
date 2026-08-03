@@ -51,7 +51,7 @@ class PageLoader(
         historyStack.init(baseUrl)
 
         // 第二步：解析HTML
-        val dom = Html.Parser.parse(html)
+        val dom = Parser.parse(html)
 
         // 提取页面标题
         val title = extractTitle(dom)
@@ -98,8 +98,9 @@ class PageLoader(
     private fun extractTitle(node: Node): String {
         if (node.kind == NodeKind.Element && node.tagName() == "title") {
             for (child in node.children) {
-                if (child.kind == NodeKind.Text && child.text != null) {
-                    return child.text.trim()
+                if (child.kind == NodeKind.Text) {
+                    val text = child.text
+                    if (text != null) return text.trim()
                 }
             }
         }
