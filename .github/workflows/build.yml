@@ -34,10 +34,10 @@ jobs:
       - name: Download QuickJS
         run: |
           cd android/app/src/main/cpp
-          curl -sL "https://bellard.org/quickjs/quickjs-2024-01-13.tar.gz" -o quickjs.tar.gz
-          tar -xzf quickjs.tar.gz
-          rm -f quickjs.tar.gz
-          ls -la quickjs-2024-01-13/quickjs.h
+          curl -sL "https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz" -o quickjs.tar.xz
+          tar -xJf quickjs.tar.xz
+          rm -f quickjs.tar.xz
+          ls -la quickjs-2026-06-04/quickjs.h
 
       - name: Build APK
         run: cd android && ./gradlew assembleDebug --no-daemon --no-build-cache

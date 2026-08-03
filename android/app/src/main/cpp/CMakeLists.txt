@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.18)
 project(easyweb_js LANGUAGES C)
 
-set(QUICKJS_VERSION "2024-01-13")
+set(QUICKJS_VERSION "2026-06-04")
 set(QUICKJS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/quickjs-${QUICKJS_VERSION}")
 
 # 如果 QuickJS 源码不存在，自动下载并解压
 if(NOT EXISTS "${QUICKJS_DIR}/quickjs.h")
     message(STATUS "Downloading QuickJS ${QUICKJS_VERSION}...")
     file(DOWNLOAD
-        "https://bellard.org/quickjs/quickjs-${QUICKJS_VERSION}.tar.gz"
-        "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.gz"
+        "https://bellard.org/quickjs/quickjs-${QUICKJS_VERSION}.tar.xz"
+        "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.xz"
         SHOW_PROGRESS
     )
     file(ARCHIVE_EXTRACT
-        INPUT "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.gz"
+        INPUT "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.xz"
         DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.gz")
+    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/quickjs.tar.xz")
     message(STATUS "QuickJS downloaded and extracted.")
 endif()
 
@@ -26,7 +26,6 @@ set(QUICKJS_SOURCES
     ${QUICKJS_DIR}/quickjs-libc.c
     ${QUICKJS_DIR}/libunicode.c
     ${QUICKJS_DIR}/libregexp.c
-    ${QUICKJS_DIR}/libbf.c
 )
 
 # QuickJS 头文件路径
